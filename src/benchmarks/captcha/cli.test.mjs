@@ -9,7 +9,8 @@ test("CAPTCHA CLI declares its own defaults and rejects ignored lifecycle flags"
   assert.deepEqual(defaults.config.providers, PROVIDERS);
   assert.equal(defaults.config.concurrency, 3);
   for (const args of [["--record"], ["--url=https://example.com"], ["--runs"], ["--runs=0"],
-    ["--concurrency=1,3"], ["--runs=1", "--runs=2"], ["--preflight=false"], ["--provider=notte,notte"]])
+    ["--concurrency=1,3"], ["--runs=1", "--runs=2"], ["--preflight=false"], ["--skip-preflight=false"],
+    ["--preflight", "--skip-preflight"], ["--provider=notte,notte"]])
     assert.throws(() => parseCaptchaArgs(args, {}));
 });
 
@@ -25,5 +26,20 @@ test("CAPTCHA CLI honors explicit options and routes preflight without opening s
       assert.equal(repository, "/repository");
       assert.equal(options.preflightOnly, true);
     }, { RUNS: "20", PROVIDER: "steel" });
+  assert.equal(called, true);
+});
+
+test("CAPTCHA CLI can skip preflight explicitly", async () => {
+  const parsed = parseCaptchaArgs(["--benchmark=captcha", "--skip-preflight"], {});
+  assert.equal(parsed.skipPreflight, true);
+  assert.equal(parsed.preflightOnly, false);
+
+  let called = false;
+  await runCaptchaCli(["--benchmark=captcha", "--skip-preflight", "--out=/tmp/captcha-evidence"],
+    "/repository", async (config, output, repository, options) => {
+      called = true;
+      assert.equal(options.skipPreflight, true);
+      assert.equal(options.preflightOnly, false);
+    }, {});
   assert.equal(called, true);
 });

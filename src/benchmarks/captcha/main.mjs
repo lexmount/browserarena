@@ -33,7 +33,7 @@ export function report(config, rows, complete) {
 <script>const data=${data};const names={kernel:'Kernel',browserbase:'Browserbase','browser-use':'Browser Use',steel:'Steel',notte:'Notte',hyperbrowser:'Hyperbrowser',anchorbrowser:'Anchor Browser',browserless:'Browserless',tilion:'Tilion'};const words={server_acceptance:' accepted',token_delivery:' delivered',page_check:' passed',page_reached:' reached'};const matrix=document.getElementById('matrix');for(const provider of ${JSON.stringify(config.providers)}){const tr=document.createElement('tr');const th=document.createElement('th');th.scope='row';th.textContent=names[provider];tr.append(th);for(const {id:type,signal} of data.types){const cell=data.cells.find(c=>c.provider===provider&&c.type===type);const td=document.createElement('td');const button=document.createElement('button');const count=cell.succeeded;const bounds=cell.success_interval_95;const median=cell.success_median_ms;button.className=count===cell.attempted&&cell.attempted?'pass':count?'mixed':'none';button.textContent=count+'/'+cell.attempted+words[signal];button.onclick=()=>{document.getElementById('detail').hidden=false;document.getElementById('detail-title').textContent=names[provider]+' · '+type;document.getElementById('detail-body').textContent=JSON.stringify({summary:cell,attempts:data.rows.filter(r=>r.provider===provider&&r.type===type)},null,2);};td.append(button);const meta=document.createElement('small');meta.textContent=bounds?Math.round(bounds[0]*100)+'–'+Math.round(bounds[1]*100)+'% interval':'No attempts';td.append(meta);if(median!==null){const time=document.createElement('small');time.textContent=(median/1000).toFixed(1)+'s median';td.append(time);}if(cell.not_run){const missing=document.createElement('small');missing.textContent=cell.not_run+' not run';td.append(missing);}const dots=document.createElement('div');dots.className='rounds';for(const round of cell.rounds.sort((a,b)=>a.round-b.round)){const dot=document.createElement('span');dot.className='round '+round.status;dot.title='Round '+round.round+': '+round.status;dots.append(dot);}td.append(dots);tr.append(td);}matrix.append(tr);}console.log('attempts',data.rows.length,'cells',data.cells.length);</script></body></html>`;
 }
 
-export async function runCampaign(config, outputArg, repository, { preflightOnly = false } = {}) {
+export async function runCampaign(config, outputArg, repository, { preflightOnly = false, skipPreflight = false } = {}) {
   const output = resolve(outputArg);
   const load = createRequire(join(repository, "package.json"));
   const clean = sanitizer(sanitizeErrorMessage);
@@ -50,14 +50,16 @@ export async function runCampaign(config, outputArg, repository, { preflightOnly
   })));
   await mkdir(dirname(output), { recursive: true });
   await mkdir(output); // Never overwrite or silently resume an earlier campaign.
-  const metadata = { benchmark: "captcha", ...config, started_at: new Date().toISOString(), node: process.version, hostname: hostname(),
+  const metadata = { benchmark: "captcha", ...config, preflight_skipped: skipPreflight, started_at: new Date().toISOString(), node: process.version, hostname: hostname(),
     browserarena_sha: execFileSync("git", ["rev-parse", "HEAD"], { cwd: repository, encoding: "utf8" }).trim(),
     sdk_versions: versions, sources: Object.fromEntries(Object.entries(sources).map(([file, value]) => [file, value.hash])) };
   await writeFile(join(output, "configuration.json"), JSON.stringify(metadata, null, 2));
   await writeFile(join(output, "plan.json"), JSON.stringify(schedule(config).flat().map(({ fixture, ...task }) => ({ ...task, type: fixture.type })), null, 2));
   await mkdir(join(output, "source"));
   for (const [file, value] of Object.entries(sources)) await writeFile(join(output, "source", file), value.data);
-  try { await writeFile(join(output, "preflight.json"), JSON.stringify(await preflight(), null, 2)); }
+  if (skipPreflight) await writeFile(join(output, "preflight.json"),
+    JSON.stringify({ skipped: true, reason: "operator requested --skip-preflight" }, null, 2));
+  else try { await writeFile(join(output, "preflight.json"), JSON.stringify(await preflight(), null, 2)); }
   catch (error) { await writeFile(join(output, "preflight-error.json"), JSON.stringify({ error: clean(error) })); throw new Error(clean(error)); }
   if (preflightOnly) { console.log("Preflight passed; no browser sessions created"); return; }
   const controller = new AbortController(), removeSignals = installCancellation(controller);

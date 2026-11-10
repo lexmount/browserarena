@@ -55,6 +55,7 @@ async function main() {
     console.log(`Usage: npm run bench -- --benchmark=hello-browser|v0|proxy-get|browser-throughput|captcha --provider=steel,kernel,...
 CAPTCHA: --runs=5 (per provider/type, 1-20) --concurrency=3 (global, 1-3)
   --provider=kernel,browserbase,browser-use,steel,notte --out=NEW_DIRECTORY --preflight
+  --skip-preflight (bypass fixture checks; marks configuration.preflight_skipped)
   Fixed 180s solve window; no retries; raw evidence defaults to .captcha-runs/.
 Common: --runs=N --out=PATH --rate=SESSIONS_PER_MINUTE --url=URL --concurrency=1,10 --record
   --run-date=YYYY-MM-DD (shared output date and article rotation for scheduled providers)

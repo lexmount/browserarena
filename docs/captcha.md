@@ -34,6 +34,9 @@ npm run bench -- --benchmark=captcha --out=.captcha-runs/repeated-campaign
 
 # Select providers explicitly. Missing credentials fail before creating sessions.
 npm run bench -- --benchmark=captcha --provider=kernel,notte --runs=5 --concurrency=2
+
+# Diagnostic only: bypass the fixture checks when the runner cannot reach them.
+npm run bench -- --benchmark=captcha --provider=kernel --runs=1 --skip-preflight
 ```
 
 `--runs` is attempts **per provider per CAPTCHA type**, from 1 to 20.
@@ -41,6 +44,12 @@ npm run bench -- --benchmark=captcha --provider=kernel,notte --runs=5 --concurre
 limited to one active session including its five-second cleanup cooldown.
 Provider and fixture order rotate between rounds. Use the same runner for the
 whole campaign and avoid overlapping other benchmarks or account workloads.
+`--skip-preflight` bypasses the fixture checks for a local or diagnostic run. It
+writes `{"skipped": true}` to `preflight.json` and records
+`preflight_skipped: true` in `configuration.json`; do not publish such a
+campaign as official. Use it only when the runner cannot reach a fixture but
+the browser path is known to work.
+
 The preflight checks public fixtures and credential presence, not account access
 or available capacity. Verify account access before running a paid campaign.
 
