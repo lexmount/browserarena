@@ -226,6 +226,17 @@ Daily results are produced by `scripts/run-and-publish.sh`, which runs one bench
 0 6 * * * /home/ubuntu/browserarena/scripts/run-and-publish.sh --region us-west --benchmark browser-throughput --concurrency 1
 ```
 
+Notte staging runs on the us-west box too, with the same script and settings, about eight hours before the production Notte run. `--region staging` runs only `notte-staging` (`https://us-staging.notte.cc`, key `NOTTE_STAGING_API_KEY` in `.env`) and publishes to the private repo [nottelabs/browserarena-staging-results](https://github.com/nottelabs/browserarena-staging-results), cloned next to this checkout (override with `STAGING_RESULTS_DIR`). It refuses to run if that clone is missing or shares this repo's origin, so staging results never reach the public repo. It takes the same checkout lock, so it never overlaps a production run:
+
+```cron
+0 20 * * * /home/ubuntu/browserarena/scripts/run-and-publish.sh --region staging
+0 21 * * * /home/ubuntu/browserarena/scripts/run-and-publish.sh --region staging --benchmark browser-throughput --concurrency 1
+```
+
+The results appear only on the team-only `/internal` page. Its Vercel environment needs `BROWSERARENA_INTERNAL_LINK_SECRET` (at least 32 characters, shared with the Notte console, which links superadmins to it) and `INTERNAL_RESULTS_GITHUB_TOKEN` (read-only access to the private repo). Without a valid session, `/internal` answers 404.
+
+Every day at 22:30 UTC, `.github/workflows/staging-summary.yml` posts staging next to that day's production Notte run (lifecycle c1/c10 and throughput) to the same Slack channel as the regression alerts, and flags a missed staging run. It reads the private repo with the `STAGING_RESULTS_TOKEN` secret (read-only). This repo's Actions logs are public, so `web/scripts/post-staging-summary.ts` never prints the numbers in CI; use `--dry-run` locally.
+
 The CAPTCHA benchmark has its own publisher, `scripts/run-captcha-and-publish.sh`, on the us-west box (210 paid sessions a day, one cron line; see [docs/captcha.md](docs/captcha.md#daily-run)):
 
 ```cron
