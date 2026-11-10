@@ -123,6 +123,27 @@ export const PROVIDERS: ProviderInfo[] = [
     marketed: false,
   },
   {
+    id: "LEXMOUNT_LIGHT",
+    displayName: "Lexmount(light)",
+    url: "https://browser.lexmount.com",
+    logo: "/logos/lexmount.png",
+    // Lexmount's public catalog currently exposes a single Hong Kong region.
+    browserRegion: "hk-1",
+    description:
+      "Moli is a lightweight, production-ready headless browser designed for AI agents to efficiently fetch, search, and automate web tasks via CLI, CDP, or WebDriver.",
+    marketed: true,
+  },
+  {
+    id: "LEXMOUNT_NORMAL",
+    displayName: "Lexmount(normal)",
+    url: "https://browser.lexmount.com",
+    logo: "/logos/lexmount.png",
+    browserRegion: "hk-1",
+    description:
+      "Chromium-based Lexmount cloud browser sessions with CDP access for general automation, rendering, and page interaction.",
+    marketed: true,
+  },
+  {
     id: "BROWSERLESS",
     displayName: "Browserless",
     url: "https://www.browserless.io",

@@ -1,14 +1,18 @@
 // Providers with a native CAPTCHA solver. Providers without one are listed, with the
 // reason, in web/lib/captcha-data.ts and are never run.
 export const PROVIDERS = ["kernel", "browserbase", "browser-use", "steel", "notte",
-  "hyperbrowser", "anchorbrowser", "browserless", "tilion"];
+  "hyperbrowser", "anchorbrowser", "browserless", "tilion", "lexmount-light",
+  "lexmount-normal"];
 // Run by the daily publisher (scripts/run-captcha-and-publish.sh). Left out until
 // their accounts can serve a daily campaign:
 // - tilion: no TILION_API_KEY on the US West runner, so preflight fails;
 // - hyperbrowser: out of credits ("You have reached your credit limit");
-// - browserless: free-plan usage cap reached (every connect returns 401).
+// - browserless: free-plan usage cap reached (every connect returns 401);
+// - lexmount-light / lexmount-normal: no key on the US West runner yet, so
+//   preflight would fail.
 // They stay benchmarked and keep their "No results yet" row on /captcha.
-export const DAILY_EXCLUDED = ["tilion", "hyperbrowser", "browserless"];
+export const DAILY_EXCLUDED = ["tilion", "hyperbrowser", "browserless",
+  "lexmount-light", "lexmount-normal"];
 export const DAILY_PROVIDERS = PROVIDERS.filter(provider => !DAILY_EXCLUDED.includes(provider));
 export const PROTOCOL_VERSION = 5;
 

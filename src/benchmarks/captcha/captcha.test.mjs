@@ -22,7 +22,7 @@ test("protocol fixes the declared workload and rejects ignored settings", () => 
 
 test("unique attempts rotate provider and fixture order with five attempts per cell", () => {
   const rounds = schedule(config), tasks = rounds.flat(), total = config.providers.length * FIXTURES.length * 5;
-  assert.equal(config.providers.length, 9);
+  assert.equal(config.providers.length, 11);
   assert.equal(tasks.length, total);
   assert.equal(new Set(tasks.map(task => task.id)).size, total);
   assert.deepEqual(rounds.map(round => round[0].provider), config.providers.slice(0, config.rounds));
@@ -465,6 +465,59 @@ test("Hyperbrowser, Anchor, Browserless and Tilion presets use native solving an
   assert.equal(requests.filter(r => r.options.method === "DELETE").length, before + 1, "A wrong-region session is released");
 
   for (const provider of config.providers) assert.ok(REQUIRED_ENV[provider]?.length, provider);
+});
+
+test("Lexmount presets enable automatic CAPTCHA processing for both engines", async () => {
+  const variants = [
+    {
+      provider: "lexmount-light",
+      configuration: { browserMode: "light", enableCaptcha: true, lightmountLayout: true,
+        lightmountResource: true, proxy: "default", region: "hk-1" },
+      body: { browser_mode: "light", enable_lightmount_layout: true,
+        enable_lightmount_resource: true, enable_captcha: true,
+        downloads: { enabled: false }, recording: { persistent: false } },
+    },
+    {
+      provider: "lexmount-normal",
+      configuration: { browserMode: "normal", enableCaptcha: true, proxy: "default", region: "hk-1" },
+      body: { browser_mode: "normal", enable_captcha: true,
+        downloads: { enabled: false }, recording: { persistent: false } },
+    },
+  ];
+
+  for (const variant of variants) {
+    const requests = [];
+    let sessionStatus = "active";
+    let deleteStatus = 204;
+    const env = { LEXMOUNT_API_KEY: "lm-key", LEXMOUNT_PROJECT_ID: "project-1" };
+    const create = createProviders(() => ({}), env, async (url, options) => {
+      requests.push({ url, options, body: options.body && JSON.parse(options.body) });
+      if (options.method === "POST" && url.endsWith("/instance/v2"))
+        return response({ session_id: "lm-id" });
+      if (options.method === "POST" && url.endsWith("/instance/session"))
+        return response({ session_id: "lm-id", status: sessionStatus, ws: "wss://lexmount.example/cdp?token=fixture", region_id: "hk-1" });
+      if (options.method === "DELETE" && url.endsWith("/instance")) {
+        if (deleteStatus === 204) return new Response(null, { status: 204 });
+        return new Response(null, { status: deleteStatus });
+      }
+      return response({});
+    });
+
+    const session = await create(variant.provider);
+    assert.deepEqual([session.id, session.cdpUrl], ["lm-id", "wss://lexmount.example/cdp?token=fixture"]);
+    assert.deepEqual(session.configuration, variant.configuration);
+    const created = requests.find(request => request.url.endsWith("/instance/v2"));
+    assert.equal(created.options.headers["x-api-key"], "lm-key");
+    assert.equal(created.options.headers["x-project-id"], "project-1");
+    assert.deepEqual(created.body, variant.body);
+
+    await session.release();
+    assert.ok(requests.some(request => request.options.method === "DELETE" && request.url.endsWith("/instance")));
+    deleteStatus = 404;
+    await session.release(); // A session that already ended answers 404.
+    sessionStatus = "closed";
+    assert.equal(await session.ended(), true);
+  }
 });
 
 test("HTML evidence escapes script payloads and labels partial campaigns", () => {

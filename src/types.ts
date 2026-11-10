@@ -11,6 +11,8 @@ export type ProviderName =
   | "LIGHTPANDA"
   | "BROWSERLESS"
   | "TINYFISH"
+  | "LEXMOUNT_LIGHT"
+  | "LEXMOUNT_NORMAL"
   | "CLOUDFLARE"
   | "AWS_AGENTCORE";
 

@@ -39,6 +39,8 @@ Create session → Connect via CDP → Navigate page → Release session
 | Anchor Browser | us-east-1 | [anchorbrowser.io](https://www.anchorbrowser.io) |
 | Browser Use | us-east-1 | [browser-use.com](https://www.browser-use.com) |
 | Lightpanda | us-west-1 | [lightpanda.io](https://lightpanda.io) |
+| Lexmount(light) | hk-1 | [browser.lexmount.com](https://browser.lexmount.com) |
+| Lexmount(normal) | hk-1 | [browser.lexmount.com](https://browser.lexmount.com) |
 
 Missing a provider? [Open a PR](https://github.com/nottelabs/browserarena/pulls).
 

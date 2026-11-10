@@ -36,3 +36,12 @@ test("TinyFish estimates unrounded duration at $0.002/minute", () => {
   assert.equal(getMedianCostUsd("TINYFISH", [30_000]), 0.001);
   assert.equal(getMedianCostUsd("TINYFISH", [90_000]), 0.003);
 });
+
+test("Lexmount prices browser time at $0.12/hour without a minimum", () => {
+  for (const provider of ["LEXMOUNT_LIGHT", "LEXMOUNT_NORMAL"]) {
+    assert.equal(getPricePerHour(provider), 0.12);
+    assert.equal(getPerSessionFee(provider), null);
+    assert.equal(getMedianCostUsd(provider, [30_000]), 0.001);
+    assert.equal(getMedianCostUsd(provider, [90_000]), 0.003);
+  }
+});

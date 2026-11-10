@@ -36,6 +36,13 @@ const PRICING: Record<string, { unit: UnitPricing }> = {
   TILION: {
     unit: { ratePerHour: 0.03, billing: "per_second", minimumSeconds: 0, perSessionCreationFee: 0 },
   },
+  // Pro, Pro+, and Enterprise include browser hours at $0.12/hour; usage is metered in browser_ms.
+  LEXMOUNT_LIGHT: {
+    unit: { ratePerHour: 0.12, billing: "per_second", minimumSeconds: 0, perSessionCreationFee: 0 },
+  },
+  LEXMOUNT_NORMAL: {
+    unit: { ratePerHour: 0.12, billing: "per_second", minimumSeconds: 0, perSessionCreationFee: 0 },
+  },
   LIGHTPANDA: {
     unit: { ratePerHour: 0.06, billing: "per_second", minimumSeconds: 0, perSessionCreationFee: 0 },
   },

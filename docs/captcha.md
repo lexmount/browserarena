@@ -3,7 +3,8 @@
 Run a fixed campaign of fresh sessions against seven CAPTCHA types: Cloudflare
 Turnstile, reCAPTCHA v2, hCaptcha, reCAPTCHA v3, GeeTest v3, a text (image to
 text) CAPTCHA and PerimeterX. The supported presets are Kernel, Browserbase, Browser Use, Steel,
-Notte, Hyperbrowser, Anchor Browser, Browserless and Tilion. Providers without
+Notte, Hyperbrowser, Anchor Browser, Browserless, Tilion, and both Lexmount variants
+(`lexmount-light` and `lexmount-normal`). Providers without
 native CAPTCHA solving are listed on the page with the reason and never run (see
 [Providers without a solver](#providers-without-a-solver)). Campaigns can be run by hand, and the US West runner publishes one
 every day (see [Daily run](#daily-run)). It does not use the lifecycle publisher.
@@ -15,18 +16,20 @@ same data.
 Install dependencies with `npm ci`. Set the existing provider variables in `.env`:
 `KERNEL_API_KEY`, `BROWSERBASE_API_KEY` and `BROWSERBASE_PROJECT_ID`,
 `BROWSER_USE_API_KEY`, `STEEL_API_KEY`, `NOTTE_API_KEY`, `HYPERBROWSER_API_KEY`,
-`ANCHORBROWSER_API_KEY`, `BROWSERLESS_API_KEY`, and `TILION_API_KEY` (plus
-`TILION_BASE_URL` when the lifecycle benchmark uses one). Only keys for selected
-providers are required. Keep credentials out of results and logs.
+`ANCHORBROWSER_API_KEY`, `BROWSERLESS_API_KEY`, `TILION_API_KEY` (plus
+`TILION_BASE_URL` when the lifecycle benchmark uses one), and
+`LEXMOUNT_API_KEY` with `LEXMOUNT_PROJECT_ID` (plus `LEXMOUNT_BASE_URL` when
+the deployment is not the default). Only keys for selected providers are
+required. Keep credentials out of results and logs.
 
 ```bash
 # Check fixture contracts and required credential presence; no paid sessions.
 npm run bench -- --benchmark=captcha --preflight
 
-# One attempt per type/provider: 63 fresh sessions.
+# One attempt per type/provider: 77 fresh sessions.
 npm run bench -- --benchmark=captcha --runs=1 --out=.captcha-runs/first-campaign
 
-# Default: 5 attempts per type/provider, 315 fresh sessions in total.
+# Default: 5 attempts per type/provider, 385 fresh sessions in total.
 npm run bench -- --benchmark=captcha --out=.captcha-runs/repeated-campaign
 
 # Select providers explicitly. Missing credentials fail before creating sessions.
@@ -91,6 +94,8 @@ benchmark retries are disabled.
 | Anchor Browser | [Native solving](https://docs.anchorbrowser.io/advanced/captcha-solving), Anchor US proxy (the solver requires one), ad and popup blocking off |
 | Browserless | [Native solving](https://docs.browserless.io/baas/bot-detection/captchas) on the stealth route, residential US proxy, SFO fleet |
 | Tilion | [Automatic challenge recovery](https://docs.tilion.dev/sessions/sessions) for CDP clients (`cdp_observe`, its default), residential US exit |
+| Lexmount(light) | [Automatic CAPTCHA processing](https://browser.lexmount.com/docs/nodejs-sdk/capabilities#automatic-captcha-processing) on Moli (`browserMode: "light"`, `enable_captcha: true`), LightMount layout/resource on, default egress (no country-targeted proxy) |
+| Lexmount(normal) | [Automatic CAPTCHA processing](https://browser.lexmount.com/docs/nodejs-sdk/capabilities#automatic-captcha-processing) on Chromium (`browserMode: "normal"`, `enable_captcha: true`), default egress (no country-targeted proxy) |
 
 Browserless has no session API: connecting starts the browser and disconnecting
 ends it, so its session ID is local to the run. Tilion is never asked to solve
@@ -236,9 +241,10 @@ aws ec2-instance-connect ssh --region us-west-1 --instance-id "$ID" --os-user ub
 
 The default is 5 attempts per provider per CAPTCHA type: 210 paid sessions for
 the six daily providers. `DAILY_EXCLUDED` in `protocol.mjs` leaves out Tilion
-(no `TILION_API_KEY` on the runner), Hyperbrowser (out of credits) and
-Browserless (free-plan usage cap) until their accounts can serve a daily
-campaign; a missing key fails preflight and holds every later run for review. A
+(no `TILION_API_KEY` on the runner), Hyperbrowser (out of credits),
+Browserless (free-plan usage cap) and both Lexmount variants (no key on the
+runner yet) until their accounts can serve a daily campaign; a missing key fails
+preflight and holds every later run for review. A
 35-session protocol v4 campaign (five providers, one round) took 22 minutes on
 2026-11-06, so expect roughly 3 to 4 hours on a normal day. `--runs N` changes it, `--dry-run` stops before the commit (and, if an earlier
 push failed, reports the waiting result without pushing it), and

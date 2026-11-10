@@ -107,9 +107,9 @@ test("CAPTCHA campaigns preserve partial coverage, delivery labels and mobile ac
   // Benchmarked providers missing from the run, then providers without native
   // solving, follow unranked, each group by name.
   await expect(table.locator("tbody th")).toHaveText(["Browser Use", "KERNEL", "Notte", "Browserbase", "Steel",
-    "Anchor Browser", "Browserless", "Hyperbrowser", "Tilion",
+    "Anchor Browser", "Browserless", "Hyperbrowser", "Lexmount(light)", "Lexmount(normal)", "Tilion",
     "AWS AgentCore", "Cloudflare", "Lightpanda", "TinyFish"]);
-  await expect(table.locator("tbody tr td:first-child")).toHaveText(["1", "2", "3", "4", "5", "–", "–", "–", "–", "–", "–", "–", "–"]);
+  await expect(table.locator("tbody tr td:first-child")).toHaveText(["1", "2", "3", "4", "5", "–", "–", "–", "–", "–", "–", "–", "–", "–", "–"]);
   // The label depends on the published history these fixtures sit beside: once a
   // real campaign includes Hyperbrowser, this synthetic run says "Not in this run".
   const history = await Promise.all((await fs.readdir(directory)).filter(name => name.endsWith(".json"))

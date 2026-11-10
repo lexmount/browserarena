@@ -120,6 +120,57 @@ export function createProviders(load, env = process.env, request = fetch) {
         configuration: { automatic_recovery: true, residential: true, region: "us" },
         release, ...(rejected && { rejected }) };
     }
+    const lexmountMode = provider === "lexmount-light" ? "light" : provider === "lexmount-normal" ? "normal" : null;
+    if (lexmountMode) {
+      const base = (env.LEXMOUNT_BASE_URL || "https://api.lexmount.com").replace(/\/+$/, "");
+      const headers = { "x-api-key": env.LEXMOUNT_API_KEY, "x-project-id": env.LEXMOUNT_PROJECT_ID };
+      const created = await api(`${base}/instance/v2`, "POST", headers, {
+        browser_mode: lexmountMode,
+        ...(lexmountMode === "light" ? { enable_lightmount_layout: true, enable_lightmount_resource: true } : {}),
+        enable_captcha: true,
+        downloads: { enabled: false },
+        recording: { persistent: false },
+        ...(env.LEXMOUNT_REGION ? { region_id: env.LEXMOUNT_REGION } : {}),
+      }, AbortSignal.timeout(60_000));
+      const id = typeof created?.session_id === "string" ? created.session_id : "";
+      if (!id) throw new Error("lexmount: session_id missing from create response");
+      const release = async () => {
+        try {
+          await api(`${base}/instance`, "DELETE", headers, { session_id: id }, AbortSignal.timeout(30_000));
+        } catch (error) {
+          if (error?.status !== 404) throw error;
+        }
+      };
+      const ended = async () => {
+        try {
+          const state = await api(`${base}/instance/session`, "POST", headers, { session_id: id }, AbortSignal.timeout(15_000));
+          return state?.status === "closed";
+        } catch (error) {
+          if (error?.status === 404) return true;
+          throw error;
+        }
+      };
+      const configuration = { browserMode: lexmountMode, enableCaptcha: true, proxy: "default",
+        ...(lexmountMode === "light" ? { lightmountLayout: true, lightmountResource: true } : {}) };
+      const rejected = reason => ({ id, cdpUrl: "", configuration, release, ended, rejected: reason });
+      const deadline = Date.now() + 60_000;
+      let info = null;
+      while (Date.now() < deadline) {
+        info = await api(`${base}/instance/session`, "POST", headers, { session_id: id }, AbortSignal.timeout(30_000));
+        if (info?.status === "active") break;
+        if (info?.status === "create_failed" || info?.status === "closed")
+          return rejected(`lexmount: session ${info.status} before activation`);
+        await new Promise(resolve => setTimeout(resolve, 1_000));
+      }
+      if (info?.status !== "active") return rejected("lexmount: session did not become active within 60s");
+      let cdpUrl = typeof info.ws === "string" ? info.ws : "";
+      if (!/^wss?:\/\//.test(cdpUrl)) {
+        const target = await api(`${base}/json/version?session_id=${encodeURIComponent(id)}`, "GET", headers, undefined, AbortSignal.timeout(15_000));
+        cdpUrl = target?.webSocketDebuggerUrlTransformed || target?.webSocketDebuggerUrl || "";
+      }
+      if (!/^wss?:\/\//.test(cdpUrl)) return rejected("lexmount: active session has no CDP URL");
+      return { id, cdpUrl, configuration: { ...configuration, ...(info.region_id ? { region: info.region_id } : {}) }, release, ended };
+    }
     throw new Error(`Unsupported provider: ${provider}`);
   };
 }
@@ -129,4 +180,6 @@ export const REQUIRED_ENV = {
   "browser-use": ["BROWSER_USE_API_KEY"], steel: ["STEEL_API_KEY"], notte: ["NOTTE_API_KEY"],
   hyperbrowser: ["HYPERBROWSER_API_KEY"], anchorbrowser: ["ANCHORBROWSER_API_KEY"],
   browserless: ["BROWSERLESS_API_KEY"], tilion: ["TILION_API_KEY"],
+  "lexmount-light": ["LEXMOUNT_API_KEY", "LEXMOUNT_PROJECT_ID"],
+  "lexmount-normal": ["LEXMOUNT_API_KEY", "LEXMOUNT_PROJECT_ID"],
 };
