@@ -27,6 +27,7 @@ const BROWSER_REGIONS: Record<string, string> = {
   KERNEL_HEADFUL: "provider-default", NOTTE: "provider-default",
   HYPERBROWSER: "us-east", ANCHORBROWSER: "provider-default", BROWSER_USE: "provider-default",
   LIGHTPANDA: "us-west", BROWSERLESS: "us-west", CLOUDFLARE: "global", AWS_AGENTCORE: "us-east-1",
+  LEXMOUNT_NORMAL: "hk-1",
 };
 
 function message(error: unknown) {

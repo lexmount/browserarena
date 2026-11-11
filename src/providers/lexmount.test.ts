@@ -203,10 +203,35 @@ test("deletes sessions explicitly and surfaces termination failures", async t =>
   await assert.rejects(() => f.provider.release("lm-1"), /Failed to delete session/);
 });
 
-test("rejects unverified proxy measurements before creating a paid session", async t => {
+test("verifies US proxy measurements through the official proxy", async t => {
   const f = await fixture(t, new LexmountNormalProvider());
-  await assert.rejects(() => f.provider.create({ proxyCountry: "US" }), /not verified/);
-  assert.deepEqual(f.requests, []);
+  const session = await f.provider.create({ proxyCountry: "US" });
+  assert.deepEqual(session.configuration, {
+    browserMode: "normal",
+    officialProxy: true,
+    proxyCountry: "US",
+    downloads: false,
+    persistentReplay: false,
+    region: "hk-1",
+  });
+  assert.deepEqual(f.requests.find(request => request.path === "/instance/v2")!.body, {
+    browser_mode: "normal",
+    official_proxy: true,
+    enable_lightmount_layout: true,
+    enable_captcha: false,
+    downloads: { enabled: false },
+    recording: { persistent: false },
+  });
+});
+
+test("rejects proxy countries and engines without a verified exit", async t => {
+  const normal = await fixture(t, new LexmountNormalProvider());
+  await assert.rejects(() => normal.provider.create({ proxyCountry: "FR" }), /default egress is verified/);
+  assert.deepEqual(normal.requests, []);
+
+  const light = await fixture(t, new LexmountLightProvider());
+  await assert.rejects(() => light.provider.create({ proxyCountry: "US" }), /default egress is verified/);
+  assert.deepEqual(light.requests, []);
 });
 
 test("estimates unrounded browser time at $0.12/hour for both engines", () => {

@@ -1,5 +1,5 @@
 import { Lexmount } from "lexmount";
-import type { ProviderClient, ProviderName, ProviderSession, SessionOptions } from "../types.js";
+import type { ProviderClient, ProviderName, ProviderSession, ProxyCountry, SessionOptions } from "../types.js";
 import { SessionCreationError } from "../types.js";
 import { requireEnv } from "../utils/env.js";
 import { msSince, nowNs } from "../utils/time.js";
@@ -15,8 +15,12 @@ type LexmountBrowserMode = "light" | "normal";
 abstract class LexmountProviderBase implements ProviderClient {
   abstract readonly name: ProviderName;
   abstract readonly browserMode: LexmountBrowserMode;
+  // The official proxy has no country parameter. The US entry verifies the
+  // pool's default egress; other countries stay unsupported until Lexmount
+  // exposes targeting.
+  readonly proxyCountries: readonly ProxyCountry[] | undefined = undefined;
   readonly proxyUnsupportedReason =
-    "Lexmount's official proxy has no documented country targeting, so country-targeted proxy measurements are not verified";
+    "Lexmount's official proxy has no country parameter; only the default egress is verified";
   private _client: Lexmount | null = null;
 
   // Pro, Pro+, and Enterprise include browser hours at $0.12/hour, and the
@@ -38,10 +42,14 @@ abstract class LexmountProviderBase implements ProviderClient {
   }
 
   async create(opts?: SessionOptions): Promise<ProviderSession> {
-    if (opts?.proxyCountry) throw new Error(this.proxyUnsupportedReason);
+    const proxyCountry = opts?.proxyCountry;
+    if (proxyCountry && !this.proxyCountries?.includes(proxyCountry))
+      throw new Error(this.proxyUnsupportedReason);
     const mode = this.browserMode;
+    const officialProxy = Boolean(proxyCountry) || process.env.LEXMOUNT_OFFICIAL_PROXY === "1";
     const session = await this.client().sessions.create({
       browserMode: mode,
+      ...(officialProxy ? { officialProxy: true } : {}),
       // Moli needs the layout/resource integrations for screenshots and
       // coordinate clicks; Chromium does not.
       ...(mode === "light"
@@ -73,6 +81,8 @@ abstract class LexmountProviderBase implements ProviderClient {
       cdpUrl,
       configuration: {
         browserMode: mode,
+        ...(officialProxy ? { officialProxy: true } : {}),
+        ...(proxyCountry ? { proxyCountry } : {}),
         ...(mode === "light"
           ? { lightmountLayout: true, lightmountResource: true }
           : {}),
@@ -97,4 +107,6 @@ export class LexmountLightProvider extends LexmountProviderBase {
 export class LexmountNormalProvider extends LexmountProviderBase {
   readonly name = "LEXMOUNT_NORMAL";
   readonly browserMode = "normal";
+  // Verified by the official proxy's default egress, not by a country selector.
+  readonly proxyCountries = ["US"] as const;
 }
