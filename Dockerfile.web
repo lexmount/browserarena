@@ -1,0 +1,16 @@
+FROM node:26-slim
+
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY package.json package-lock.json ./
+COPY web/package.json web/package-lock.json ./web/
+RUN npm ci && npm --prefix web ci
+
+COPY . .
+RUN npm --prefix web run build && chown -R node:node web/.next
+
+ENV NODE_ENV=production
+USER node
+EXPOSE 3000
+CMD ["npm", "--prefix", "web", "run", "start", "--", "--hostname", "0.0.0.0", "--port", "3000"]

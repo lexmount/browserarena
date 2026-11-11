@@ -1,0 +1,39 @@
+name: Build Browser Arena website
+
+on:
+  push:
+    branches: [lexmount-provider]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout selected revision
+        env:
+          REPOSITORY: ${{ gitea.repository }}
+          REVISION: ${{ gitea.sha }}
+          CHECKOUT_TOKEN: ${{ secrets.GITEA_TOKEN }}
+        run: |
+          set -eu
+          git init .
+          git remote add origin "https://code.lexmount.net/${REPOSITORY}.git"
+          AUTH=$(printf 'x-access-token:%s' "$CHECKOUT_TOKEN" | base64 -w0)
+          git -c "http.extraHeader=Authorization: Basic $AUTH" fetch --depth=1 origin "$REVISION"
+          git checkout --detach FETCH_HEAD
+
+      - name: Build and publish website image
+        env:
+          REPOSITORY: ${{ gitea.repository }}
+          REVISION: ${{ gitea.sha }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+        run: |
+          set -eu
+          test -n "$REGISTRY_USERNAME"
+          test -n "$REGISTRY_TOKEN"
+          printf '%s' "$REGISTRY_TOKEN" | docker login code.lexmount.net --username "$REGISTRY_USERNAME" --password-stdin
+          IMAGE="code.lexmount.net/${REPOSITORY}:web-${REVISION}"
+          docker build --file Dockerfile.web --tag "$IMAGE" .
+          docker push "$IMAGE"
+          printf 'Published image: %s\n' "$IMAGE"
