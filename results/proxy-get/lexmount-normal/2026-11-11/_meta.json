@@ -1,0 +1,22 @@
+{
+  "region": "",
+  "instance_type": null,
+  "cloud": "aws",
+  "os": "darwin arm64",
+  "node_version": "v25.6.0",
+  "started_at": "2026-11-11T08:34:40.761Z",
+  "finished_at": "2026-11-11T08:39:21.502Z",
+  "benchmark": "proxy-get",
+  "run_id": "9028880a-56ab-4850-9456-c9478fc67f95",
+  "url": "https://www.browserarena.ai/api/proxy-get/payload",
+  "bootstrapUrl": "https://www.browserarena.ai/api/proxy-get/bootstrap",
+  "countryUrl": "https://api.country.is/",
+  "expectedBytes": 1048576,
+  "expectedSha256": "7317cbc61ea73cc173a87aacd2f86645ba3932a5f7fb3f04b1c7169a633b7776",
+  "timeoutMs": 30000,
+  "countries": [
+    "US"
+  ],
+  "runs": 20,
+  "runId": "9028880a-56ab-4850-9456-c9478fc67f95"
+}
