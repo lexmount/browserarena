@@ -1,5 +1,5 @@
 /**
- * Backtest of the regression detector against the real committed results.
+ * Backtest of the regression detector against frozen summaries of real results.
  *
  * These assertions are the calibration record. If you change a threshold in
  * `DEFAULT_CONFIG`, this test tells you exactly which historical incidents you
@@ -10,8 +10,8 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 
-import { loadHistoricalLeaderboard } from "./data";
 import type { HistoricalProviderPoint } from "./data-shared";
 import {
   breachingMetricsAt,
@@ -25,15 +25,17 @@ const CONCURRENCY = 1;
 // The cron commits new results every day. Freeze the history at the date these
 // assertions were calibrated on, so tomorrow's run cannot change the backtest.
 const SNAPSHOT_DATE = "2026-09-09";
+const history: Record<string, HistoricalProviderPoint[]> = JSON.parse(
+  fs.readFileSync(new URL("./fixtures/regression-history.json", import.meta.url), "utf8")
+);
 
 async function pointsFor(
   provider: string,
   snapshotDate = SNAPSHOT_DATE
 ): Promise<HistoricalProviderPoint[]> {
-  const history = await loadHistoricalLeaderboard("hello-browser", CONCURRENCY);
-  const series = history.providers.find((p) => p.provider === provider);
-  assert.ok(series, `no history for ${provider}`);
-  return series.points.filter((p) => p.date <= snapshotDate);
+  const points = history[provider];
+  assert.ok(points, `no history for ${provider}`);
+  return points.filter((p) => p.date <= snapshotDate);
 }
 
 /** Replays the edge-triggered dedup and returns "<date>/<metrics>" per open event. */

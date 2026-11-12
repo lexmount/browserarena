@@ -8,7 +8,7 @@ import { BenchmarkSectionHeader } from "@/components/benchmarks/section-header";
 import { RunDatePicker } from "@/components/benchmarks/run-date-picker";
 import { CaptchaLeaderboard, CaptchaRuns } from "@/components/benchmarks/captcha-leaderboard";
 import styles from "@/components/benchmarks/benchmark.module.css";
-import { CAPTCHA_UNSUPPORTED_PROVIDERS, captchaProviderNotes, loadCaptchaCampaigns } from "@/lib/captcha-data";
+import { CAPTCHA_UNSUPPORTED_PROVIDERS, captchaProviderNotes, captchaRunDate, loadCaptchaCampaigns } from "@/lib/captcha-data";
 import { captchaColumns, captchaLeaderboard } from "@/lib/captcha-leaderboard";
 import { BENCHMARK_CACHE_LIFE } from "@/lib/benchmark-cache";
 import { numberToWord } from "@/lib/providers";
@@ -36,9 +36,35 @@ async function CampaignView({ selected }: { selected: string }) {
   "use cache";
   cacheLife(BENCHMARK_CACHE_LIFE);
   const campaigns = await loadCaptchaCampaigns();
-  const campaign = selected ? campaigns.find(item => item.id === selected) : campaigns[0];
-  if (selected && !campaign) notFound();
-  if (!campaign) return <BenchmarkShell benchmark="captcha">
+  const dayKey = (value: string) => value.slice(0, 10);
+  const sameProtocol = (group: typeof campaigns) =>
+    group.every(item => item.protocol_version === group[0].protocol_version);
+  const byDay = new Map<string, typeof campaigns>();
+  for (const item of campaigns) {
+    const key = captchaRunDate(item);
+    byDay.set(key, [...(byDay.get(key) ?? []), item]);
+  }
+  type CampaignEntry = { key: string; label: string; campaigns: typeof campaigns };
+  const entries: CampaignEntry[] = [];
+  for (const group of byDay.values()) {
+    if (group.length > 1 && sameProtocol(group)) {
+      entries.push({
+        key: captchaRunDate(group[0]),
+        label: `${shortDate(captchaRunDate(group[0]))}${group.every(item => item.complete) ? "" : " (partial)"}`,
+        campaigns: group,
+      });
+    } else {
+      for (const item of group) {
+        entries.push({
+          key: item.id,
+          label: `${shortDate(captchaRunDate(item))}${group.length > 1 ? ` · ${item.id}` : ""}${item.complete ? "" : " (partial)"}`,
+          campaigns: [item],
+        });
+      }
+    }
+  }
+  entries.sort((a, b) => captchaRunDate(b.campaigns[0]).localeCompare(captchaRunDate(a.campaigns[0])));
+  if (!entries.length) return <BenchmarkShell benchmark="captcha">
     <div className={styles.tableStage}>
       <BenchmarkSectionHeader><BenchmarkTitle name={BENCHMARK_TITLES.captcha} /></BenchmarkSectionHeader>
       <div data-benchmark-panel="empty" className="p-6">
@@ -49,20 +75,42 @@ async function CampaignView({ selected }: { selected: string }) {
     </div>
   </BenchmarkShell>;
 
-  const cells = campaignCells(campaign);
+  const entry = selected
+    ? entries.find(item => item.key === selected || item.campaigns.some(campaign => campaign.id === selected))
+    : entries[0];
+  if (!entry) notFound();
+  const merged = entry.campaigns.length > 1;
+  const campaign = merged ? {
+    ...entry.campaigns[0],
+    id: entry.key,
+    providers: [...new Set(entry.campaigns.flatMap(item => item.providers))],
+    attempts: entry.campaigns.flatMap(item => item.attempts),
+    rounds: Math.max(...entry.campaigns.map(item => item.rounds)),
+    complete: entry.campaigns.every(item => item.complete),
+    halted: entry.campaigns.some(item => item.halted),
+    interrupted: entry.campaigns.some(item => item.interrupted),
+  } : entry.campaigns[0];
+  const cells = merged ? entry.campaigns.flatMap(item => campaignCells(item)) : campaignCells(campaign);
   const columns = captchaColumns(campaign);
   const rows = captchaLeaderboard(campaign, cells, columns, CAPTCHA_UNSUPPORTED_PROVIDERS, captchaProviderNotes(campaign, campaigns));
-  const latest = campaign.id === campaigns[0].id;
-  const runLabel = (item: (typeof campaigns)[number]) => {
-    const sameDay = campaigns.filter(other => shortDate(other.started_at) === shortDate(item.started_at)).length > 1;
+  const latest = entry === entries[0];
+  const republished = captchaRunDate(campaign) !== dayKey(campaign.started_at);
+  const campaignLabel = (item: (typeof campaigns)[number]) => {
+    const sameDay = campaigns.filter(other => dayKey(other.started_at) === dayKey(item.started_at)).length > 1;
     return `${shortDate(item.started_at)}${sameDay ? ` · ${item.id}` : ""}${item.complete ? "" : " (partial)"}`;
   };
-  const runs = campaigns.map(item => ({
-    id: item.id, label: runLabel(item), rounds: item.rounds, providers: item.providers.length,
-    attempts: item.attempts.length, planned: campaignCells(item).reduce((sum, cell) => sum + cell.planned, 0),
-    status: item.halted ? "Halted" : item.interrupted ? "Interrupted" : item.complete ? "Complete" : "Partial",
-    href: item.id === campaigns[0].id ? "/captcha" : `/captcha?campaign=${encodeURIComponent(item.id)}`,
-  }));
+  const entryFor = (item: (typeof campaigns)[number]) => entries.find(entry => entry.campaigns.some(candidate => candidate.id === item.id))!;
+  const runs = campaigns.map(item => {
+    const owner = entryFor(item);
+    return {
+      id: item.id, label: campaignLabel(item), rounds: item.rounds, providers: item.providers.length,
+      attempts: item.attempts.length, planned: campaignCells(item).reduce((sum, cell) => sum + cell.planned, 0),
+      status: item.halted ? "Halted" : item.interrupted ? "Interrupted" : item.complete ? "Complete" : "Partial",
+      href: owner.key === item.id
+        ? (item.id === campaigns[0].id ? "/captcha" : `/captcha?campaign=${encodeURIComponent(item.id)}`)
+        : `/captcha?campaign=${encodeURIComponent(owner.key)}`,
+    };
+  });
   // Columns whose success is not a server verdict, named with their own signal.
   const unverified = columns.filter(column => column.signal !== "server_acceptance").map(column => `${column.label} (${column.signal_label.toLowerCase()})`);
   return <BenchmarkShell benchmark="captcha">
@@ -71,15 +119,17 @@ async function CampaignView({ selected }: { selected: string }) {
       Unrun attempts stay visible; cleanup failures are reported separately from challenge outcomes.
     </p>}
     <CaptchaLeaderboard columns={columns} rows={rows}
-      caption={`CAPTCHA results for the campaign started ${formatDate(campaign.started_at)}. Ranked by overall success rate, then median time of successful attempts.`}
-      dateControl={<RunDatePicker dates={[]} selectedDate={campaign.id} runs={runs.map(run => ({ value: run.id, label: run.label }))} param="campaign" benchmark="captcha-handling" pathname="/captcha" />}
-      summary={<p>{latest ? "Latest run" : "Run on"} <strong className="font-semibold text-foreground">{formatDate(campaign.started_at)}</strong> · {campaign.rounds} fresh sessions per provider and CAPTCHA · {SOLVE_WINDOW_SECONDS} seconds to solve each</p>} />
+      caption={merged
+        ? `CAPTCHA results for ${entry.campaigns.length} campaigns started ${formatDate(campaign.started_at)}. Ranked by overall success rate, then median time of successful attempts.`
+        : `CAPTCHA results for the campaign started ${formatDate(campaign.started_at)}. Ranked by overall success rate, then median time of successful attempts.`}
+      dateControl={<RunDatePicker dates={[]} selectedDate={entry.key} runs={entries.map(item => ({ value: item.key, label: item.label }))} param="campaign" benchmark="captcha-handling" pathname="/captcha" />}
+      summary={<p>{republished ? (latest ? "Latest publication" : "Published on") : latest ? (merged ? "Latest runs" : "Latest run") : (merged ? "Runs on" : "Run on")} <strong className="font-semibold text-foreground">{formatDate(captchaRunDate(campaign))}</strong>{merged ? ` · ${entry.campaigns.length} campaigns` : ""} · {campaign.rounds} fresh sessions per provider and CAPTCHA · {SOLVE_WINDOW_SECONDS} seconds to solve each</p>} />
     <section aria-label="Runs">
       <BenchmarkSectionHeader chart title="Runs" description="Published campaigns, newest first." controls={<div className="flex flex-wrap items-center gap-3">
-        <a data-control href={`/api/captcha?campaign=${encodeURIComponent(campaign.id)}`} className={linkClass}>Export results</a>
+        {!merged && <a data-control href={`/api/captcha?campaign=${encodeURIComponent(campaign.id)}`} className={linkClass}>Export results</a>}
         <a data-control href={METHODOLOGY} className={linkClass}>Methodology</a>
       </div>} />
-      <CaptchaRuns runs={runs} selected={campaign.id} />
+      <CaptchaRuns runs={runs} selected={merged ? entry.campaigns[0].id : campaign.id} />
     </section>
     <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
       Can a fresh browser session get through the challenge? Compare native provider handling across {numberToWord(columns.length)} public fixtures.

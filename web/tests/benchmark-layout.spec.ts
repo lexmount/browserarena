@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 // Keep the selected day's leaderboard stable as new daily runs are published.
-const runDate = "2026-10-26";
+const runDate = "2026-11-11";
 
 for (const route of ["/", "/proxies", "/throughput"]) {
   test(`${route} keeps setup and ranking controls separate across screen sizes`, async ({ page }) => {
@@ -81,7 +81,8 @@ test("history tooltip paints above overlapping legend text", async ({ page }) =>
 
 test("select chevrons keep padding from the right border", async ({ page }) => {
   await page.goto(`/?date=${runDate}`);
-  for (const name of ["Run date", "Breakdown provider"]) {
+  await expect(page.locator("[data-run-date]")).toHaveText("Nov 11, 2026");
+  for (const name of ["Breakdown provider"]) {
     const select = page.getByRole("combobox", { name });
     await select.scrollIntoViewIfNeeded();
     const png = (await select.screenshot({ scale: "css" })).toString("base64");

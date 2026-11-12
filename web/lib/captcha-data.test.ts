@@ -3,9 +3,15 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { CAPTCHA_UNSUPPORTED_PROVIDERS, captchaColumns, cellSuccess, loadCaptchaCampaigns } from "./captcha-data";
+import { CAPTCHA_UNSUPPORTED_PROVIDERS, captchaColumns, captchaRunDate, cellSuccess, loadCaptchaCampaigns } from "./captcha-data";
 import { campaignCells } from "../../src/benchmarks/captcha/publication";
 import { PROVIDERS } from "../../src/benchmarks/captcha/protocol.mjs";
+
+test("CAPTCHA publication dates preserve the execution date for undated campaign IDs", () => {
+  assert.equal(captchaRunDate({ id: "2026-11-11-lexmount-normal-r5", started_at: "2026-11-10T07:18:29Z" }), "2026-11-11");
+  assert.equal(captchaRunDate({ id: "2026-11-11", started_at: "2026-11-10T07:18:29Z" }), "2026-11-11");
+  assert.equal(captchaRunDate({ id: "synthetic-layout-1", started_at: "2026-10-28T00:00:00Z" }), "2026-10-28");
+});
 
 test("every site provider is either benchmarked or listed with a reason", () => {
   const site = ["kernel", "browserbase", "browser-use", "steel", "notte", "hyperbrowser", "anchorbrowser",

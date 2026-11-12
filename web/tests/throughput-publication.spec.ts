@@ -7,7 +7,13 @@ test("throughput defaults to a complete day and labels selectable partial days",
   const publication = data.metadata.publication;
   await page.goto("/throughput");
   const picker = page.getByRole("combobox", { name: "Run date" });
-  await expect(picker).toHaveValue(publication.latestCompleteDate);
+  const dateControl = page.locator("[data-run-date]");
+  if (publication.dates.length > 1) {
+    await expect(picker).toHaveValue(publication.latestCompleteDate);
+  } else {
+    await expect(dateControl).toHaveText(new Date(`${publication.selectedDate}T00:00:00Z`)
+      .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }));
+  }
   await expect(page.locator("tbody tr")).toHaveCount(data.providers.length);
 
   const partial = publication.coverage.findLast((day: { complete: boolean }) => !day.complete);
@@ -24,7 +30,7 @@ test("throughput defaults to a complete day and labels selectable partial days",
   for (const width of [1440, 375]) {
     await page.setViewportSize({ width, height: 950 });
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
-    const box = (await picker.boundingBox())!;
+    const box = (await dateControl.boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(width);
     await page.screenshot({ path: testInfo.outputPath(`throughput-${width}.png`) });

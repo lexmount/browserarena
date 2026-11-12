@@ -17,6 +17,11 @@ export function captchaProviderNotes(selected: { providers: string[] }, campaign
 }
 
 export type { CaptchaCell, CaptchaType, PublicCampaign };
+// Dated IDs identify the publication batch; execution timestamps stay intact.
+export function captchaRunDate(campaign: Pick<PublicCampaign, "id" | "started_at">): string {
+  return /^\d{4}-\d{2}-\d{2}(?:-|$)/.test(campaign.id) ? campaign.id.slice(0, 10) : campaign.started_at.slice(0, 10);
+}
+
 // `signal_label` is "Server acceptance", "Token delivery only", "Page check" or "Page reached".
 export { captchaColumns, SUCCESS_WORDS } from "./captcha-leaderboard";
 
