@@ -9,15 +9,22 @@ import { loadProxyGetHistory, summarizeProxyGetHistory } from "./proxy-get-histo
 
 const results = fileURLToPath(new URL("../../results", import.meta.url));
 
-test("published proxy index lists exactly the retained November 11 results", () => {
+test("published proxy index lists exactly the retained November 10-11 results", () => {
   const base = path.join(results, "proxy-get");
   const index = JSON.parse(fs.readFileSync(path.join(base, "index.json"), "utf8"));
-  const providers = fs.readdirSync(base, { withFileTypes: true }).filter(item => item.isDirectory()
-    && fs.existsSync(path.join(base, item.name, "2026-11-11/results.jsonl"))).map(item => item.name).sort();
+  const providers = fs.readdirSync(base, { withFileTypes: true }).filter(item => item.isDirectory())
+    .map(item => ({
+      name: item.name,
+      dates: fs.readdirSync(path.join(base, item.name), { withFileTypes: true })
+        .filter(day => day.isDirectory() && fs.existsSync(path.join(base, item.name, day.name, "results.jsonl")))
+        .map(day => day.name).sort(),
+    }))
+    .filter(provider => provider.dates.length)
+    .sort((a, b) => a.name.localeCompare(b.name));
   assert.equal(index.version, 1);
-  assert.deepEqual(index.providers, providers.map(name => ({ name, dates: ["2026-11-11"] })));
-  assert.ok(providers.includes("lexmount-normal"));
-  assert.ok(providers.includes("notte"));
+  assert.deepEqual(index.providers, providers);
+  assert.deepEqual(providers.find(provider => provider.name === "lexmount-normal")?.dates, ["2026-11-11"]);
+  assert.deepEqual(providers.find(provider => provider.name === "notte")?.dates, ["2026-11-10", "2026-11-11"]);
 });
 
 test("default proxy history and exports compare Lexmount with the retained providers", async () => {
@@ -26,7 +33,7 @@ test("default proxy history and exports compare Lexmount with the retained provi
   try {
     const entries = await loadProxyGetEntries(true);
     const history = summarizeProxyGetHistory(entries, "US");
-    assert.deepEqual(history.dates, ["2026-11-11"]);
+    assert.deepEqual(history.dates, ["2026-11-10", "2026-11-11"]);
     assert.equal(history.selectedDate, "2026-11-11");
     assert.ok(history.overview.providers.some(row => row.provider === "LEXMOUNT_NORMAL" && row.attempts > 0));
     assert.ok(history.overview.providers.some(row => row.provider === "NOTTE" && row.attempts > 0));

@@ -1,20 +1,24 @@
-# November 11 comparison snapshot
+# November 10-11 comparison snapshot
 
-This branch publishes only the **2026-11-11** comparison batch.
+This branch publishes the **2026-11-10** baseline and the **2026-11-11**
+comparison batch.
 
-- Session performance and browser throughput: the Lexmount light/normal files
-  from `2026-11-10` are archived under `2026-11-11`, unchanged. No November 9
-  Lexmount results were present. Other providers retain their November 11 files.
-- Proxies: all retained files, including Lexmount normal, are from November 11.
-- CAPTCHA: the November 10 `west-v5` and `lexmount-normal-r5` campaigns are
-  published together under November 11 IDs. Their original start/end times,
+- Session performance and browser throughput: all providers have files for
+  both days. The Lexmount light/normal runs from November 10 are also archived
+  under November 11, unchanged, so the November 11 rows stay full.
+- Proxies: the retained files are from November 10 and November 11. Lexmount
+  normal has November 11 only because that was its first verified US run.
+- CAPTCHA: the November 10 and November 11 `west-v5` campaigns are published
+  under their actual dates. The November 10 `lexmount-normal-r5` campaign is
+  published under a November 11 publication ID. Original start/end times,
   source revisions, attempts and metrics are preserved; the runs table and
-  exports still identify their actual execution times.
+  exports still show actual execution times.
 
 The batch date is a publication date, not a claim that all measurements ran on
 the same day. Sample counts differ; Lexmount has concurrency-1 results only.
-Providers without November 11 results in a benchmark are not backfilled.
-Other dated public result artifacts, including legacy v0 and diagnostics, have
-been removed from this branch. They remain recoverable from Git history.
-Regression tests keep frozen aggregate calibration summaries under
-`web/lib/fixtures/`; these are test inputs and are not published results.
+Providers without a November 11 run in a benchmark keep their November 10
+baseline instead of borrowed data. November 12 partial results and other dated
+artifacts, including legacy v0 and diagnostics, have been removed from this
+branch; they remain recoverable from Git history. Regression tests keep frozen
+aggregate calibration summaries under `web/lib/fixtures/`; these are test
+inputs and are not published results.
