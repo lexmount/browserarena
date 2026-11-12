@@ -1,13 +1,13 @@
 {
-  "region": "us-east-1",
-  "instance_type": "t3.medium",
+  "region": "",
+  "instance_type": null,
   "cloud": "aws",
-  "os": "linux x64",
-  "node_version": "v22.23.2",
-  "started_at": "2026-11-10T17:00:18.450Z",
-  "finished_at": "2026-11-10T17:45:31.961Z",
+  "os": "darwin arm64",
+  "node_version": "v25.6.0",
+  "started_at": "2026-11-11T07:19:53.992Z",
+  "finished_at": "2026-11-11T07:24:38.254Z",
   "benchmark": "proxy-get",
-  "run_id": "daily-proxy-2026-11-10",
+  "run_id": "156c8762-e1f1-4806-8b35-df9a2489b9be",
   "url": "https://www.browserarena.ai/api/proxy-get/payload",
   "bootstrapUrl": "https://www.browserarena.ai/api/proxy-get/bootstrap",
   "countryUrl": "https://api.country.is/",
@@ -15,13 +15,8 @@
   "expectedSha256": "7317cbc61ea73cc173a87aacd2f86645ba3932a5f7fb3f04b1c7169a633b7776",
   "timeoutMs": 30000,
   "countries": [
-    "US",
-    "FR",
-    "BR",
-    "IN",
-    "JP"
+    "US"
   ],
-  "runs": 50,
-  "rate": 10,
-  "runId": "daily-proxy-2026-11-10"
+  "runs": 20,
+  "runId": "156c8762-e1f1-4806-8b35-df9a2489b9be"
 }

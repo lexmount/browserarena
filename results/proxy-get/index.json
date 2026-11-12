@@ -4,56 +4,54 @@
     {
       "name": "anchorbrowser",
       "dates": [
-        "2026-11-10",
         "2026-11-11"
       ]
     },
     {
       "name": "aws-agentcore",
       "dates": [
-        "2026-11-10",
         "2026-11-11"
       ]
     },
     {
       "name": "browser-use",
       "dates": [
-        "2026-11-10",
         "2026-11-11"
       ]
     },
     {
       "name": "browserbase",
       "dates": [
-        "2026-11-10",
         "2026-11-11"
       ]
     },
     {
       "name": "browserless",
       "dates": [
-        "2026-11-10",
         "2026-11-11"
       ]
     },
     {
       "name": "cloudflare",
       "dates": [
-        "2026-11-10",
         "2026-11-11"
       ]
     },
     {
       "name": "hyperbrowser",
       "dates": [
-        "2026-11-10",
         "2026-11-11"
       ]
     },
     {
       "name": "kernel",
       "dates": [
-        "2026-11-10",
+        "2026-11-11"
+      ]
+    },
+    {
+      "name": "lexmount-light",
+      "dates": [
         "2026-11-11"
       ]
     },
@@ -66,28 +64,24 @@
     {
       "name": "lightpanda",
       "dates": [
-        "2026-11-10",
         "2026-11-11"
       ]
     },
     {
       "name": "notte",
       "dates": [
-        "2026-11-10",
         "2026-11-11"
       ]
     },
     {
       "name": "steel",
       "dates": [
-        "2026-11-10",
         "2026-11-11"
       ]
     },
     {
       "name": "tilion",
       "dates": [
-        "2026-11-10",
         "2026-11-11"
       ]
     }

@@ -1,24 +1,20 @@
-# November 10-11 comparison snapshot
+# November 11 comparison snapshot
 
-This branch publishes the **2026-11-10** baseline and the **2026-11-11**
-comparison batch.
+This branch publishes the **2026-11-11** comparison batch.
 
-- Session performance and browser throughput: all providers have files for
-  both days. The Lexmount light/normal runs from November 10 are also archived
-  under November 11, unchanged, so the November 11 rows stay full.
-- Proxies: the retained files are from November 10 and November 11. Lexmount
-  normal has November 11 only because that was its first verified US run.
-- CAPTCHA: the November 10 and November 11 `west-v5` campaigns are published
-  under their actual dates. The November 10 `lexmount-normal-r5` campaign is
-  published under a November 11 publication ID. Original start/end times,
-  source revisions, attempts and metrics are preserved; the runs table and
-  exports still show actual execution times.
+- Session performance and browser throughput: all providers, including
+  Lexmount light/normal, have November 11 files.
+- Proxies: all providers have November 11 files. Lexmount light and normal
+  both use the official proxy's default US egress; the light suite contains
+  20 attempts.
+- CAPTCHA: the November 11 `west-v5` campaign is the real November 11 run.
+  The November 10 `lexmount-normal-r5` campaign is published under a November
+  11 publication ID; its original start/end times, source revision, attempts
+  and metrics are preserved.
 
 The batch date is a publication date, not a claim that all measurements ran on
-the same day. Sample counts differ; Lexmount has concurrency-1 results only.
-Providers without a November 11 run in a benchmark keep their November 10
-baseline instead of borrowed data. November 12 partial results and other dated
-artifacts, including legacy v0 and diagnostics, have been removed from this
-branch; they remain recoverable from Git history. Regression tests keep frozen
-aggregate calibration summaries under `web/lib/fixtures/`; these are test
-inputs and are not published results.
+the same day. Sample counts differ; Lexmount has concurrency-1 browser results
+only. November 12 and other dated artifacts, including legacy v0 and
+diagnostics, have been removed from this branch; they remain recoverable from
+Git history. Regression tests keep frozen aggregate calibration summaries
+under `web/lib/fixtures/`; these are test inputs and are not published results.
