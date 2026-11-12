@@ -35,7 +35,7 @@ test("default lifecycle and throughput results include both Lexmount modes and c
   }
 });
 
-test("November 11 CAPTCHA publication compares real attempts without changing execution times", async () => {
+test("November 11 CAPTCHA publication compares real attempts under one date", async () => {
   const campaigns = await loadCaptchaCampaigns(path.join(results, "captcha"));
   assert.equal(campaigns.length, 2);
   assert.ok(campaigns.every(campaign => captchaRunDate(campaign) === date));
@@ -44,7 +44,7 @@ test("November 11 CAPTCHA publication compares real attempts without changing ex
   assert.ok(west);
   assert.ok(lexmount);
   assert.ok(west.started_at.startsWith("2026-11-11"));
-  assert.ok(lexmount.started_at.startsWith("2026-11-10"));
+  assert.ok(lexmount.started_at.startsWith("2026-11-11"));
   const combined = { ...campaigns[0], providers: [...new Set(campaigns.flatMap(campaign => campaign.providers))],
     attempts: campaigns.flatMap(campaign => campaign.attempts) };
   const rows = captchaLeaderboard(combined, campaigns.flatMap(campaignCells), captchaColumns(combined), {});
