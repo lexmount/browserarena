@@ -36,8 +36,10 @@ test("default proxy history and exports compare Lexmount with the retained provi
     const history = summarizeProxyGetHistory(entries, "US");
     assert.deepEqual(history.dates, ["2026-11-11"]);
     assert.equal(history.selectedDate, "2026-11-11");
-    assert.ok(history.overview.providers.some(row => row.provider === "LEXMOUNT_LIGHT" && row.attempts > 0));
-    assert.ok(history.overview.providers.some(row => row.provider === "LEXMOUNT_NORMAL" && row.attempts > 0));
+    assert.ok(history.overview.providers.some(row => row.provider === "LEXMOUNT_LIGHT" && row.attempts > 0
+      && row.costPerSuccessUsd !== null && row.totalCostUsd !== null));
+    assert.ok(history.overview.providers.some(row => row.provider === "LEXMOUNT_NORMAL" && row.attempts > 0
+      && row.costPerSuccessUsd !== null && row.totalCostUsd !== null));
     assert.ok(history.overview.providers.some(row => row.provider === "NOTTE" && row.attempts > 0));
     for (const country of ["US", "FR", "BR", "IN", "JP"]) {
       const response = await GET(new Request(`https://example.test/api/proxy-get?country=${country}&view=overview`));

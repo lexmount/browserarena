@@ -42,6 +42,17 @@ test("session bandwidth minimums and increments apply before GB conversion", () 
   assert.equal(estimateProxyCost(pricing, 1000, 100).proxy_cost_usd, 0.01);
   assert.equal(estimateProxyCost(pricing, 1000, 1_000_001).proxy_cost_usd, 0.02);
 });
+test("Lexmount charges browser time plus $9.30 per GB of proxy traffic", () => {
+  for (const provider of ["LEXMOUNT_LIGHT", "LEXMOUNT_NORMAL"]) {
+    const pricing = DEFAULT_PROXY_PRICING[provider];
+    assert.equal(pricing.proxyPerGbUsd, 9.3);
+    assert.equal(pricing.browserPerHourUsd, 0.12);
+    const cost = estimateProxyCost(pricing, 3_600_000, 1_000_000_000);
+    assert.equal(cost.browser_cost_usd, 0.12);
+    assert.equal(cost.proxy_cost_usd, 9.3);
+    assert.equal(cost.cost_usd, cost.browser_cost_usd! + cost.proxy_cost_usd!);
+  }
+});
 test("pricing overrides are validated and retain provenance", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "proxy-pricing-"));
   const file = path.join(dir, "pricing.json");
