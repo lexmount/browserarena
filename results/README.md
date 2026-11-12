@@ -7,8 +7,9 @@ This branch publishes the **2026-11-11** comparison batch.
 - Proxies: all providers have November 11 files. Lexmount light and normal
   both use the official proxy's default US egress; the light suite contains
   20 attempts.
-- CAPTCHA: the `west-v5` and `lexmount-normal-r5` campaigns are published
-  under November 11 IDs, with start/end times aligned to the publication date.
+- CAPTCHA: the `west-v5`, `lexmount-normal-r5` and `lexmount-light-r5`
+  campaigns are published under November 11 IDs, with start/end times aligned
+  to the publication date.
   Source revisions, attempts and metrics are preserved.
 
 The batch date is a publication date, not a claim that all measurements ran on

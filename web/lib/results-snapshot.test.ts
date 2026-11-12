@@ -37,18 +37,19 @@ test("default lifecycle and throughput results include both Lexmount modes and c
 
 test("November 11 CAPTCHA publication compares real attempts under one date", async () => {
   const campaigns = await loadCaptchaCampaigns(path.join(results, "captcha"));
-  assert.equal(campaigns.length, 2);
+  assert.equal(campaigns.length, 3);
   assert.ok(campaigns.every(campaign => captchaRunDate(campaign) === date));
   const west = campaigns.find(campaign => campaign.id.includes("west-v5"));
-  const lexmount = campaigns.find(campaign => campaign.id.includes("lexmount-normal-r5"));
+  const normal = campaigns.find(campaign => campaign.id.includes("lexmount-normal-r5"));
+  const light = campaigns.find(campaign => campaign.id.includes("lexmount-light-r5"));
   assert.ok(west);
-  assert.ok(lexmount);
-  assert.ok(west.started_at.startsWith("2026-11-11"));
-  assert.ok(lexmount.started_at.startsWith("2026-11-11"));
+  assert.ok(normal);
+  assert.ok(light);
+  assert.ok(campaigns.every(campaign => campaign.started_at.startsWith("2026-11-11")));
   const combined = { ...campaigns[0], providers: [...new Set(campaigns.flatMap(campaign => campaign.providers))],
     attempts: campaigns.flatMap(campaign => campaign.attempts) };
   const rows = captchaLeaderboard(combined, campaigns.flatMap(campaignCells), captchaColumns(combined), {});
-  for (const provider of ["lexmount-normal", "notte"]) {
+  for (const provider of ["lexmount-light", "lexmount-normal", "notte"]) {
     assert.ok(rows.some(row => row.provider === provider && row.attempted > 0), provider);
   }
 });
