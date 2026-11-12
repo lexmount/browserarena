@@ -224,14 +224,36 @@ test("verifies US proxy measurements through the official proxy", async t => {
   });
 });
 
-test("rejects proxy countries and engines without a verified exit", async t => {
+test("both engines accept the verified US proxy exit and reject other countries", async t => {
   const normal = await fixture(t, new LexmountNormalProvider());
   await assert.rejects(() => normal.provider.create({ proxyCountry: "FR" }), /default egress is verified/);
   assert.deepEqual(normal.requests, []);
 
   const light = await fixture(t, new LexmountLightProvider());
-  await assert.rejects(() => light.provider.create({ proxyCountry: "US" }), /default egress is verified/);
-  assert.deepEqual(light.requests, []);
+  const session = await light.provider.create({ proxyCountry: "US" });
+  assert.deepEqual(session.configuration, {
+    browserMode: "light",
+    officialProxy: true,
+    proxyCountry: "US",
+    lightmountLayout: true,
+    lightmountResource: true,
+    downloads: false,
+    persistentReplay: false,
+    region: "hk-1",
+  });
+  assert.deepEqual(light.requests.find(request => request.path === "/instance/v2")!.body, {
+    browser_mode: "light",
+    official_proxy: true,
+    enable_lightmount_layout: true,
+    enable_lightmount_resource: true,
+    enable_captcha: false,
+    downloads: { enabled: false },
+    recording: { persistent: false },
+  });
+
+  const lightFr = await fixture(t, new LexmountLightProvider());
+  await assert.rejects(() => lightFr.provider.create({ proxyCountry: "FR" }), /default egress is verified/);
+  assert.deepEqual(lightFr.requests, []);
 });
 
 test("estimates unrounded browser time at $0.12/hour for both engines", () => {

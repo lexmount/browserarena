@@ -102,6 +102,9 @@ abstract class LexmountProviderBase implements ProviderClient {
 export class LexmountLightProvider extends LexmountProviderBase {
   readonly name = "LEXMOUNT_LIGHT";
   readonly browserMode = "light";
+  // Moli reaches the same official proxy pool; the default (and only
+  // verified) egress is US, just like Chromium.
+  readonly proxyCountries = ["US"] as const;
 }
 
 export class LexmountNormalProvider extends LexmountProviderBase {
