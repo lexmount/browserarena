@@ -6,3 +6,7 @@
 - The secret is not in the repo or `.env` files. The Vercel project API (`GET /v9/projects/<id>`) lists it under `protectionBypass` with scope `automation-bypass`. `vercel curl --debug` shows the header name but not its value.
 - Props passed from server to client components are serialized into the page HTML, and with `cacheComponents` the payload appears twice. Pass only the fields a client component reads; see `web/lib/history-chart-data.ts` and `proxyStatsForClient` in `web/lib/proxy-get.ts`. `web/lib/page-payload.test.ts` pins what is kept. Check page weight with `curl -s --compressed <url> | wc -c` before and after a change.
 - Other local sessions may run Next.js servers on ports 3030–3032. Check `lsof -ti tcp:<port>` before starting or stopping a server.
+
+## Review and merge
+
+Hand ready PRs to the hosted maintainer with `/review-merge` from the [lex-maintainer plugin](https://github.com/lexmount/lex-agent-plugins/tree/main/plugins/lex-maintainer). An agent without the plugin installs it and runs its `onboard` skill first; the skill configures what it can and asks for the rest.
